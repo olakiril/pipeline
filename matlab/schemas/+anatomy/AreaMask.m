@@ -306,7 +306,7 @@ classdef AreaMask < dj.Manual
 %                     imshow(background(:,:,:,params.back_idx))
 %                  end
 %             end
-im = hsv2rgb(cat(3,ne7.mat.normalize(area_map),sat,background(:,:,1,1)));
+            im = hsv2rgb(cat(3,ne7.mat.normalize(area_map),sat,background(:,:,1,1)));
             if nargin<2 || isempty(params.back_idx) || params.back_idx > size(background,4)
                 image((im));
             else
