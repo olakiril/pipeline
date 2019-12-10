@@ -212,9 +212,12 @@ classdef AreaMask < dj.Manual
             
             % get information from the scans depending on the setup
             if (nargin<3 || ~override) && (strcmp(fetch1(experiment.Session & key,'rig'),'2P4') || length(masks)<2)
-                [x_pos, y_pos, fieldWidths, fieldHeights, fieldWidthsInMicrons, masks, areas, avg_image] = ...
-                    fetchn(obj * meso.ScanInfoField * meso.SummaryImagesAverage & key,...
-                    'x','y','px_width','px_height','um_width','mask','brain_area','average_image');
+%                 [x_pos, y_pos, fieldWidths, fieldHeights, fieldWidthsInMicrons, masks, areas, avg_image] = ...
+%                     fetchn(obj * meso.ScanInfoField * meso.SummaryImagesAverage & key,...
+%                     'x','y','px_width','px_height','um_width','mask','brain_area','average_image');
+                                [x_pos, y_pos, fieldWidths, fieldHeights, fieldWidthsInMicrons, masks, areas, avg_image] = ...
+                    fetchn(obj * meso.ScanInfoField * meso.SummaryImagesCorrelation & key,...
+                    'x','y','px_width','px_height','um_width','mask','brain_area','correlation_image');
                 
                 % calculate initial scale
                 pxpitch = mean(fieldWidths.\fieldWidthsInMicrons);
@@ -242,7 +245,7 @@ classdef AreaMask < dj.Manual
             end
         end
         
-        function plot(obj, varargin)
+        function [im, area_map, areas] = plot(obj, varargin)
             
             params.back_idx = [];
             params.bcontrast = 0.4;
