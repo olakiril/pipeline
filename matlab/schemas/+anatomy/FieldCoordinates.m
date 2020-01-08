@@ -40,8 +40,8 @@ classdef FieldCoordinates < dj.Manual
                     fetchn(meso.ScanInfoField * meso.SummaryImagesAverage & keyI & 'channel = 1',...
                     'x','y','z','px_width','px_height','um_width','average_image','field');
             else
-                tfp.fliplr = 1;
-                tfp.flipud = 1;
+%                 tfp.fliplr = 1;
+%                 tfp.flipud = 1;
                 [fieldWidths, fieldHeights, fieldWidthsInMicrons, frames, slice_pos, field_num] = ...
                     fetchn(reso.ScanInfo * reso.SummaryImagesAverage * reso.ScanInfoField & keyI & fuse.ScanSet,...
                     'px_width','px_height','um_width','average_image','z','field');
@@ -101,7 +101,10 @@ classdef FieldCoordinates < dj.Manual
                         self.processImage(frame,'exp',params.contrast);
                 end
             else
-                im = ne7.mat.normalize(frames{1}.^params.contrast);
+                
+                im = ne7.mat.normalize(abs(frames{1}.^params.contrast));
+                if tfp.fliplr;im = fliplr(im);end
+                if tfp.flipud;im = flipud(im);end
                 x_pos = 0;
                 y_pos = 0;
             end
@@ -283,7 +286,7 @@ classdef FieldCoordinates < dj.Manual
             YY = round(y_offset + size(ref_mask,1)/2 - size(imS,1)/2); % convert center coordinates to 0,0 coordinates
             XX = round(x_offset + size(ref_mask,2)/2 - size(imS,2)/2); % convert center coordinates to 0,0 coordinates
             fmask = ref_mask(YY+1:size(imS,1)+YY,XX+1:size(imS,2)+XX);
-            fmask = self.filterImage(ne7.mat.normalize(fmask),tform,1)>0;
+            fmask = self.filterImage(fmask,tform,1);
             fmask = fmask(...
                 round(size(fmask,1)/2)-floor(sz(1)/2)+1:floor(size(fmask,1)/2)+floor(sz(1)/2),...
                 round(size(fmask,2)/2)-floor(sz(2)/2)+1:floor(size(fmask,2)/2)+floor(sz(2)/2));
@@ -431,9 +434,8 @@ classdef FieldCoordinates < dj.Manual
             R = [cos(theta) -sin(theta) 0; ...
                 sin(theta) cos(theta) 0;...
                 0 0 1];
-            tform = R*diag([tfp.scale*(1-2*tfp.fliplr),...
-                tfp.scale*(1-2*tfp.flipud),...
-                (1-2*tfp.fliplr)*(1-2*tfp.flipud)]);
+            tform = R*diag([tfp.scale,tfp.scale,1])...
+                .*([1-2*tfp.fliplr 1-2*tfp.flipud (1-2*tfp.fliplr)*(1-2*tfp.flipud)]'*[1 1 1]);
         end
         
         function fim = filterImage(im,tform,inv)%{

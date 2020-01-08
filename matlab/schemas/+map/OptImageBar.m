@@ -205,11 +205,12 @@ classdef OptImageBar < dj.Imported
                 vessels = single(vessels);
                 
                 % process image range
-                imP = wrapTo2Pi(imP);
+                 imP = wrapTo2Pi(imP);
                 mn = prctile(imP(:),1);
                 mx = prctile(imP(:),99);
                 imP(imP<mn) = mn;
                 imP(imP>mx) = mx;
+%                imP = wrapTo2Pi(imP - median(imP(:))+pi)-pi;
                 imP = normalize(imP)*2*pi - pi;
                 imA(imA>prctile(imA(:),99)) = prctile(imA(:),99);
                   
