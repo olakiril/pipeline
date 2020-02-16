@@ -158,7 +158,7 @@ classdef AreaMask < dj.Manual
                 for field_key = fetch(anatomy.FieldCoordinates & keyI)'
                     
                     % find corresponding mask area
-                    fmask = filterMask(anatomy.FieldCoordinates & field_key, area_masks{imask});
+                    fmask = ne7.mat.normalize(filterMask(anatomy.FieldCoordinates & field_key, area_masks{imask}))>0;
                     
                     % insert if overlap exists
                     if ~all(~fmask(:))
@@ -211,10 +211,14 @@ classdef AreaMask < dj.Manual
             [masks, keys] = fetchn(obj & key,'mask');
             
             % get information from the scans depending on the setup
-            if (nargin<3 || ~override) && (strcmp(fetch1(experiment.Session & key,'rig'),'2P4') || length(masks)<2)
-                [x_pos, y_pos, fieldWidths, fieldHeights, fieldWidthsInMicrons, masks, areas, avg_image] = ...
-                    fetchn(obj * meso.ScanInfoField * meso.SummaryImagesAverage & key,...
-                    'x','y','px_width','px_height','um_width','mask','brain_area','average_image');
+%             (nargin<3 || ~override) && (strcmp(fetch1(experiment.Session & key,'rig'),'2P4') || length(masks)<2)
+            if (nargin<3 || ~override) && (strcmp(fetch1(experiment.Session & key,'rig'),'2P4'))
+%                 [x_pos, y_pos, fieldWidths, fieldHeights, fieldWidthsInMicrons, masks, areas, avg_image] = ...
+%                     fetchn(obj * meso.ScanInfoField * meso.SummaryImagesAverage & key,...
+%                     'x','y','px_width','px_height','um_width','mask','brain_area','average_image');
+                                [x_pos, y_pos, fieldWidths, fieldHeights, fieldWidthsInMicrons, masks, areas, avg_image] = ...
+                    fetchn(obj * meso.ScanInfoField * meso.SummaryImagesCorrelation & key,...
+                    'x','y','px_width','px_height','um_width','mask','brain_area','correlation_image');
                 
                 % calculate initial scale
                 pxpitch = mean(fieldWidths.\fieldWidthsInMicrons);
@@ -233,6 +237,15 @@ classdef AreaMask < dj.Manual
                     background(y_idx, x_idx) = avg_image{islice}(1:size(mask,1),1:size(mask,2));
                 end
                 
+            elseif ~strcmp(fetch1(experiment.Session & key,'rig'),'2P4') 
+              
+                area_map = zeros(size(masks{1}));
+                for imasks = 1:length(masks)
+                    area_map(masks{imasks}) = imasks;
+                end
+                background= zeros(size(masks{1}));
+                bck = fetch1(obj * reso.SummaryImagesCorrelation & key,'correlation_image');
+                  background = bck(1:size(background,1),1:size(background,2));
             else
                 area_map = zeros(size(masks{1}));
                 for imasks = 1:length(masks)
@@ -242,8 +255,8 @@ classdef AreaMask < dj.Manual
             end
         end
         
-        function plot(obj, varargin)
-            
+        function varargout = plot(obj, varargin)
+%             [im, area_map, areas] = plot(obj, varargin)
             params.back_idx = [];
             params.bcontrast = 0.4;
             params.contrast = 1;
@@ -334,6 +347,17 @@ classdef AreaMask < dj.Manual
                 text(s(1).Centroid(1),s(1).Centroid(2),un_areas{iarea},'color',params.fontcolor,'fontsize',params.fontsize,'rotation',0,...
                     'HorizontalAlignment','center')
             end
+            
+            if nargout>0
+                varargout{1} = im;
+                if nargout>1
+                    varargout{2} = area_map;
+                    if nargout>2
+                        varargout{3} = areas;
+                    end
+                end
+            end
+
         end
         
         
