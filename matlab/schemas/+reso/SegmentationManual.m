@@ -83,11 +83,22 @@ classdef SegmentationManual < dj.Computed
             end
         end
         
-        function plot(self)
+        function MAP = plot(self,varargin)
+            
+            params.numbering = false;
+            params.textcolor = [1 1 1];
+            params.colormap = @(n) rgb2hsv(jet(n));
+            params.figure = [];
+            
+            params = ne7.mat.getParams(params,varargin);
             
             keys = fetch(self);
             for k = keys'
-                figure
+                if isempty(params.figure)
+                    figure
+                else
+                    figure(params.figure)
+                end
 
                 [masks ,tkeys]= fetchn(reso.SegmentationMask & k,'pixels');
                 images = fetchn(reso.SummaryImagesAverage & k, 'average_image', 'ORDER BY channel');
@@ -104,7 +115,8 @@ classdef SegmentationManual < dj.Computed
                     nmask(mask==un(i)) = i;
                 end
 
-                colors = [0 0 0;[linspace(0,1,length(masks))' ones(length(masks),1)*0.8 ones(length(masks),1)*0.8]];
+                colors =  [0 0 0;bsxfun(@times,params.colormap(length(masks)),[1 0.8 0.8])];
+            
                 im = images{1};
                 ul = prctile(im(:),99);
                 im(im>ul) = ul;
@@ -118,10 +130,24 @@ classdef SegmentationManual < dj.Computed
                 axis image
                 axis off
                 hold on
-                plot(size(map,2)*0.1+[0 w/mw*50],size(map,1)*0.9*[1 1],'-w','LineWidth',2)
-                text(mean(size(map,2)*0.1+[0 w/mw*50]),size(map,1)*0.9,'50um','Color',[1 1 1],'FontSize',12,'VerticalAlignment','top')
+                plot(size(map,2)*0.05+[0 w/mw*50],size(map,1)*0.8*[1 1],'-w','LineWidth',2)
+                text(mean(size(map,2)*0.01+[0 w/mw*50]),size(map,1)*0.82,'50um','Color',[1 1 1],'FontSize',12,'VerticalAlignment','top')
                 shg
                 set(gcf,'name',sprintf('Masks %d %d %d',k.animal_id,k.session,k.scan_idx))
+                
+                if params.numbering
+                  stats = regionprops(mask);
+                    for i = 1:length(stats)
+                        text(stats(i).Centroid(1), stats(i).Centroid(2),...
+                            num2str(mask(round(stats(i).Centroid(2)+1), round(stats(i).Centroid(1)+1))),...
+                            'color',params.textcolor)
+                    end
+
+                end
+                
+                if nargout>0
+                    MAP = colors;
+                end
             end
         end
     end
