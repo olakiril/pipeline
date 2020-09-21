@@ -12,7 +12,7 @@ hret                        : double                        # horizontal retinot
 classdef UnitRetinotopy <  dj.Computed
     
     properties
-        keySource = proj(anatomy.RefMap)*map.RetMap*fuse.ScanSetUnit
+        keySource = proj(anatomy.RefMap)*map.RetMap*fuse.ScanSet
     end
     
     methods(Access=protected)
@@ -38,13 +38,10 @@ classdef UnitRetinotopy <  dj.Computed
                 
                 % fetch cell coordinates
                 if strcmp(setup,'2P4')
-                    [px,wt,keys] = fetchn(reso.SegmentationMask*meso.ScanSetUnit & key,'pixels','weights');
-                    
-                    
+                    [px,wt,keys] = fetchn(meso.SegmentationMask*meso.ScanSetUnit & key,'pixels','weights');
+                    keys = rmfield(keys,{'field','mask_id','channel'});
                 else
                     [px,wt,keys] = fetchn(reso.SegmentationMask*reso.ScanSetUnit & key,'pixels','weights');
-                    keys = rmfield(keys,{'field','mask_id','channel'});
-                    
                 end
                 [keys.ref_idx] = deal(key.ref_idx);
                 [keys.ret_idx] = deal(key.ret_idx);

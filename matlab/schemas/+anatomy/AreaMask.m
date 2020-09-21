@@ -210,9 +210,17 @@ classdef AreaMask < dj.Manual
             % fetch masks & keys
             [masks, keys] = fetchn(obj & key,'mask');
             
+            
+            if isnan(override)
+                area_map = zeros(size(masks{1}));
+                for imasks = 1:length(masks)
+                    area_map(masks{imasks}) = imasks;
+                end
+                background = [];
+                
             % get information from the scans depending on the setup
 %             (nargin<3 || ~override) && (strcmp(fetch1(experiment.Session & key,'rig'),'2P4') || length(masks)<2)
-            if (nargin<3 || ~override) && (strcmp(fetch1(experiment.Session & key,'rig'),'2P4'))
+            elseif (nargin<3 || ~override) && (strcmp(fetch1(experiment.Session & key,'rig'),'2P4'))
 %                 [x_pos, y_pos, fieldWidths, fieldHeights, fieldWidthsInMicrons, masks, areas, avg_image] = ...
 %                     fetchn(obj * meso.ScanInfoField * meso.SummaryImagesAverage & key,...
 %                     'x','y','px_width','px_height','um_width','mask','brain_area','average_image');
@@ -246,6 +254,7 @@ classdef AreaMask < dj.Manual
                 background= zeros(size(masks{1}));
                 bck = fetch1(obj * reso.SummaryImagesCorrelation & key,'correlation_image');
                   background = bck(1:size(background,1),1:size(background,2));
+
             else
                 area_map = zeros(size(masks{1}));
                 for imasks = 1:length(masks)
@@ -270,6 +279,7 @@ classdef AreaMask < dj.Manual
             params.fontsize = 12;
             params.fontcolor = [0.4 0 0];
             params.vcontrast = 1;
+            params.limits = 0;
             
             params = ne7.mat.getParams(params,varargin);
             
@@ -278,7 +288,7 @@ classdef AreaMask < dj.Manual
             else
                 contiguous = 0;
             end
-            
+            contiguous = 0;
             % get masks
             [area_map, keys, mask_background] = getContiguousMask(obj,fetch(obj),contiguous);
             areas = {keys(:).brain_area}';
@@ -319,7 +329,15 @@ classdef AreaMask < dj.Manual
 %                     imshow(background(:,:,:,params.back_idx))
 %                  end
 %             end
-            im = hsv2rgb(cat(3,ne7.mat.normalize(area_map),sat,background(:,:,1,1)));
+            back = background(:,:,1,1);
+            if params.limits
+                mn = prctile(back(:),1);
+                mx = prctile(back(:),99);
+                back(back<mn) = mn;
+                back(back>mx) = mx;
+                back = normalize(back);
+            end
+            im = hsv2rgb(cat(3,ne7.mat.normalize(area_map),sat,back));
             if nargin<2 || isempty(params.back_idx) || params.back_idx > size(background,4)
                 image((im));
             else

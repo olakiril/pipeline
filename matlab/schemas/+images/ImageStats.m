@@ -25,7 +25,7 @@ classdef ImageStats < dj.Imported
             cmb = combnk(1:size(im,3),2);
             for icmb = 1:size(cmb,1)
                 md(icmb) =  key.channel_mean(cmb(icmb,1)) - key.channel_mean(cmb(icmb,2));
-                sd(icmb) =  key.channel_mean(cmb(icmb,1)) - key.channel_mean(cmb(icmb,2));
+                sd(icmb) =  key.channel_std(cmb(icmb,1)) - key.channel_std(cmb(icmb,2));
                 cr(icmb) =  mean(corr(reshape(im(:,:,cmb(icmb,1)),[],1),reshape(im(:,:,cmb(icmb,2)),[],1)));
             end
             

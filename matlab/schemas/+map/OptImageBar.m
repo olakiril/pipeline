@@ -183,11 +183,12 @@ classdef OptImageBar < dj.Imported
             
             params.sigma = 2; %sigma of the gaussian filter
             params.saturation = 1; % saturation scaling
-            params.exp = []; % exponent factor of rescaling, 1-2 works
+            params.scale = 1; % exponent factor of rescaling, 1-2 works
             params.shift = 0; % angular shift for improving map presentation
             params.subplot = true;
             params.vcontrast = 1;
             params.figure = [];
+            params.weight = 0;
             
             params = ne7.mat.getParams(params,varargin);
             
@@ -205,16 +206,25 @@ classdef OptImageBar < dj.Imported
                 vessels = single(vessels);
                 
                 % process image range
-                 imP = wrapTo2Pi(imP);
                 mn = prctile(imP(:),1);
                 mx = prctile(imP(:),99);
                 imP(imP<mn) = mn;
                 imP(imP>mx) = mx;
-%                imP = wrapTo2Pi(imP - median(imP(:))+pi)-pi;
-                imP = normalize(imP)*2*pi - pi;
+                imP = wrapTo2Pi(imP);
+                imP = (imP - median(imP(:)) + params.shift)*params.scale;
+                imP_idx1 = imP>pi;
+                imP_idx2 = imP<-pi;
+                imP(imP_idx2) = 2*pi - abs(imP(imP_idx2));
+                imP(imP_idx1) = imP(imP_idx1) - 2*pi;
                 imA(imA>prctile(imA(:),99)) = prctile(imA(:),99);
-                  
+                
                 % create the hsv map
+                if params.weight
+                    w = imA;
+                        w(w>prctile(w(:),30)) = prctile(imA(:),30);
+                    w = w.^2;
+                    imP = imP.*(w/mean(w(:)));
+                end
                 h = imgaussfilt(normalize(imP),params.sigma);
                 s = imgaussfilt(normalize(imA),params.sigma)*params.saturation;
                 v = ones(size(imA));
@@ -235,7 +245,8 @@ classdef OptImageBar < dj.Imported
                         keys(ikey).axis,keys(ikey).animal_id,keys(ikey).session,keys(ikey).scan_idx))
                     
                     % plot
-                    angle_map = hsv2rgb(cat(3,h,cat(3,ones(size(s)),ones(size(v)))));
+                    %angle_map = hsv2rgb(cat(3,h,cat(3,ones(size(s)),ones(size(v)))));
+                    angle_map = hsv2rgb(cat(3,h,ones(size(s)),s));
                     combined_map = hsv2rgb(cat(3,h,s,v));
                     if params.subplot==1
                         imshowpair(angle_map,combined_map,'montage')
@@ -336,9 +347,13 @@ classdef OptImageBar < dj.Imported
                     
                     C = get (gca, 'CurrentPoint');
                     title(gca, ['(X,Y) = (', num2str(C(1,1)), ', ',num2str(C(1,2)), ')']);
+                    C
                     Hv = H(round(C(1,2)),round(C(1,1)));
                     Vv = V(round(C(1,2)),round(C(1,1)));
+                    find(H'==Hv)
+                    find(V'==Vv)
                     I = find(H'==Hv & V'==Vv);
+                    I
                     [x,y] = ind2sub(size(H),I);
                     handles = plot(x,y,'.r');
                 end
