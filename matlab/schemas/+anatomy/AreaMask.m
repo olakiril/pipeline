@@ -288,7 +288,7 @@ classdef AreaMask < dj.Manual
             else
                 contiguous = 0;
             end
-            contiguous = 0;
+            contiguous = nan;
             % get masks
             [area_map, keys, mask_background] = getContiguousMask(obj,fetch(obj),contiguous);
             areas = {keys(:).brain_area}';

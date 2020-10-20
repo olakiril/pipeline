@@ -206,16 +206,20 @@ classdef OptImageBar < dj.Imported
                 vessels = single(vessels);
                 
                 % process image range
-                mn = prctile(imP(:),1);
-                mx = prctile(imP(:),99);
-                imP(imP<mn) = mn;
-                imP(imP>mx) = mx;
+
                 imP = wrapTo2Pi(imP);
+
                 imP = (imP - median(imP(:)) + params.shift)*params.scale;
                 imP_idx1 = imP>pi;
                 imP_idx2 = imP<-pi;
                 imP(imP_idx2) = 2*pi - abs(imP(imP_idx2));
                 imP(imP_idx1) = imP(imP_idx1) - 2*pi;
+                mn = prctile(imP(:),.5);
+                mx = prctile(imP(:),99.5);
+                imP(imP<mn) = mn;
+                imP(imP>mx) = mx;
+%                 o = isoutlier(imP(:),'grubbs');
+%                 imP(o) = nan;
                 imA(imA>prctile(imA(:),99)) = prctile(imA(:),99);
                 
                 % create the hsv map
