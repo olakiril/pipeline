@@ -42,7 +42,7 @@ classdef UnitSign <  dj.Computed
                 for imask = 1:length(keys)
                     % get mask position
                     
-                    tuple = keys(imask);
+                    tuple = rmfield(keys(imask),{'field','channel'});
                     idx= px{imask}<=numel(SIGNMAP);
                     tuple.sign =  sum(SIGNMAP(px{imask}(idx)).*wt{imask}(idx))/sum(wt{imask}(idx));
                     
