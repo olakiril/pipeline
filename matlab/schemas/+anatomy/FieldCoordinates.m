@@ -141,7 +141,7 @@ classdef FieldCoordinates < dj.Manual
                     tuple.tform = self.createTform(tfp);
                     tuple.pxpitch = pxpitch/tfp.scale; % estimated pixel pitch of the vessel map;
                     tuple.field_depth = slice_pos(islice) - depth;
-                    insert(self,tuple)
+                    insert(self,tuple,'replace')
                 end
             else
                 disp 'Exiting...'
